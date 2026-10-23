@@ -1,0 +1,23 @@
+[Unit]
+Description=Storm Voice Hub
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=storm
+Group=storm
+WorkingDirectory=/opt/storm-voice
+Environment=NODE_ENV=production
+Environment=PORT=3000
+EnvironmentFile=/etc/storm-voice.env
+ExecStart=/usr/bin/npm start
+Restart=on-failure
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+UMask=0077
+
+[Install]
+WantedBy=multi-user.target

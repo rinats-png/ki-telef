@@ -1,0 +1,6 @@
+[
+  {"name":"B2B Ansprechpartner","role":"B2B_SPECIALIST","upn":"b2b@ihre-domain.example","directPhone":"+496039000001","postalCodes":[],"pestTypes":[],"availability":"OFFLINE"},
+  {"name":"Notdienst Techniker","role":"EMERGENCY_TECH","upn":"notdienst@ihre-domain.example","directPhone":"+491700000001","postalCodes":[],"pestTypes":[],"availability":"OFFLINE"},
+  {"name":"Innendienst","role":"BACKOFFICE","upn":"service@ihre-domain.example","directPhone":"+496039000002","postalCodes":[],"pestTypes":[],"availability":"OFFLINE"},
+  {"name":"Fachberatung","role":"PEST_EXPERT","upn":"beratung@ihre-domain.example","directPhone":"+496039000003","postalCodes":[],"pestTypes":[],"availability":"OFFLINE"}
+]

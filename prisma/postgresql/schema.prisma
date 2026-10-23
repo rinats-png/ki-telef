@@ -1,0 +1,244 @@
+// Generated from the canonical SQLite development schema. Run npm run db:postgres:sync after model changes.
+generator client {
+  provider = "prisma-client-js"
+}
+datasource db {
+  provider = "postgresql"
+  url = env("DATABASE_URL")
+}
+model Admin {
+  id String @id @default(cuid())
+  username String @unique
+  passwordHash String
+  sessions Session[]
+}
+model Session {
+  tokenHash String @id
+  adminId String
+  admin Admin @relation(fields: [adminId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+}
+model LoginAttempt {
+  key String @id
+  failures Int @default(0)
+  windowStart DateTime @default(now())
+}
+model Call {
+  id String @id @default(cuid())
+  provider String
+  externalId String
+  mode String
+  status String @default("IN_PROGRESS")
+  createdAt DateTime @default(now())
+  endedAt DateTime?
+  transcript String @default("")
+  recordingUrl String?
+  lead Lead?
+  escalations Escalation[]
+  receipts Receipt[]
+  @@unique([provider, externalId, mode])
+  @@index([mode, createdAt])
+}
+model Technician {
+  mode String @default("live")
+  id String @id
+  name String
+  specialty String
+  leads Lead[]
+}
+model Lead {
+  id String @id @default(cuid())
+  callId String @unique
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  name String
+  phone String
+  street String
+  postalCode String
+  city String
+  customerType String
+  company String @default("")
+  pestType String
+  urgency String
+  summary String
+  duration String @default("")
+  location String @default("")
+  childrenOrPets String @default("")
+  serviceAreaStatus String @default("MANUAL_REVIEW")
+  status String @default("OPEN")
+  technicianId String?
+  technician Technician? @relation(fields: [technicianId], references: [id])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model Escalation {
+  id String @id @default(cuid())
+  callId String @unique
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  reason String
+  phone String
+  deliveryStatus String @default("NOT_CONFIGURED")
+  createdAt DateTime @default(now())
+}
+model Receipt {
+  id String @id @default(cuid())
+  callId String
+  call Call @relation(fields: [callId], references: [id], onDelete: Cascade)
+  eventKey String
+  result String
+  @@unique([callId, eventKey])
+}
+
+model Customer {
+  id String @id @default(cuid())
+  mode String
+  name String
+  company String @default("")
+  phone String
+  email String @default("")
+  street String @default("")
+  postalCode String @default("")
+  city String @default("")
+  status String @default("NEW")
+  contractType String @default("NONE")
+  createdAt DateTime @default(now())
+  tickets CallTicket[]
+  @@unique([mode, phone])
+  @@index([phone])
+}
+model Employee {
+  id String @id @default(cuid())
+  mode String
+  name String
+  role String
+  upn String
+  postalCodes Json @default("[]")
+  pestTypes Json @default("[]")
+  directPhone String @default("")
+  availability String @default("OFFLINE")
+  active Boolean @default(true)
+  tickets CallTicket[]
+  artifacts OutlookArtifact[]
+  offers SlotOffer[]
+}
+model CallTicket {
+  id String @id @default(cuid())
+  mode String
+  provider String
+  externalId String
+  customerId String?
+  customer Customer? @relation(fields: [customerId], references: [id])
+  assignedEmployeeId String?
+  assignedEmployee Employee? @relation(fields: [assignedEmployeeId], references: [id])
+  callerPhone String @default("")
+  customerKind String @default("UNKNOWN")
+  category String @default("NEW_INQUIRY")
+  pestType String @default("UNKNOWN")
+  urgency String @default("LOW")
+  summary String @default("")
+  transcript String @default("")
+  routingReason String @default("")
+  routeAction String @default("CALLBACK")
+  status String @default("IDENTIFYING")
+  outlookEventId String?
+  outlookDraftId String?
+  recordingUrl String?
+  durationSeconds Int?
+  callStatus String @default("UNKNOWN")
+  transcriptRank Int @default(0)
+  startedAt DateTime?
+  endedAt DateTime?
+  finalizationHash String?
+  processingUntil DateTime?
+  lastError String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  artifacts OutlookArtifact[]
+  offers SlotOffer[]
+  telephony TelephonyCall?
+  activities CallActivity[]
+  @@unique([mode, provider, externalId])
+}
+model SlotOffer {
+  id String @id @default(cuid())
+  ticketId String
+  ticket CallTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee Employee @relation(fields: [employeeId], references: [id])
+  start DateTime
+  end DateTime
+  expiresAt DateTime
+  claimed Boolean @default(false)
+  @@index([employeeId, start])
+}
+model OutlookArtifact {
+  id String @id @default(cuid())
+  ticketId String
+  ticket CallTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  employeeId String
+  employee Employee @relation(fields: [employeeId], references: [id])
+  kind String
+  subject String
+  recipient String
+  bodyText String
+  start DateTime?
+  end DateTime?
+  remoteId String?
+  isMock Boolean
+  state String @default("PENDING")
+  createdAt DateTime @default(now())
+  @@unique([ticketId, kind])
+}
+
+model TelephonyCall {
+  id String @id @default(cuid())
+  carrier String @default("twilio")
+  carrierCallId String @unique
+  ticketId String @unique
+  ticket CallTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  fromNumber String
+  toNumber String
+  state String @default("REGISTERING")
+  bridgeUri String?
+  registeringUntil DateTime?
+  startedAt DateTime @default(now())
+  endedAt DateTime?
+  durationSeconds Int?
+  legs VoiceLeg[]
+  transfer TransferJob?
+}
+model VoiceLeg {
+  id String @id @default(cuid())
+  telephonyId String
+  telephony TelephonyCall @relation(fields: [telephonyId], references: [id], onDelete: Cascade)
+  provider String
+  providerCallId String
+  transcript String @default("")
+  transcriptRank Int @default(0)
+  recordingUrl String?
+  createdAt DateTime @default(now())
+  finalStatus String?
+  endedAt DateTime?
+  @@unique([provider, providerCallId])
+}
+model TransferJob {
+  id String @id @default(cuid())
+  telephonyId String @unique
+  telephony TelephonyCall @relation(fields: [telephonyId], references: [id], onDelete: Cascade)
+  technicianPhone String
+  technicianCallSid String? @unique
+  conferenceSid String?
+  state String @default("PREPARING")
+  reason String
+  error String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+model CallActivity {
+  id String @id @default(cuid())
+  ticketId String
+  ticket CallTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  kind String
+  message String
+  dedupeKey String? @unique
+  createdAt DateTime @default(now())
+}

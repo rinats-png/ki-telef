@@ -1,0 +1,11 @@
+import { execFileSync } from 'node:child_process';
+import { rmSync, closeSync, openSync } from 'node:fs';
+import { afterAll } from 'vitest';
+const file = `/tmp/storm-integration-${process.pid}.db`;
+closeSync(openSync(file, 'a', 0o600));
+process.env.DATABASE_URL = `file:${file}`;
+process.env.APP_URL = 'http://localhost:3000';
+process.env.VAPI_WEBHOOK_SECRET = 'test-vapi-secret-with-more-than-32-characters';
+process.env.RETELL_API_KEY = 'test-retell-key';
+execFileSync(process.execPath, ['node_modules/prisma/build/index.js', 'migrate', 'deploy'], { env: process.env, stdio: 'pipe' });
+afterAll(() => { rmSync(file, { force: true }); rmSync(`${file}-journal`, { force: true }); });
